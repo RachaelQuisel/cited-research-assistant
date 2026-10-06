@@ -34,7 +34,15 @@ def dates(start, end):
 
 def search_arxiv(query, start=None, end=None, limit=10):
     dates(start, end)
-    search = f'all:{query}'
+    terms = query.split()
+    # A space in an ungrouped query is rewritten by arXiv as OR, and AND binds
+    # tighter than OR. `all:graph neural network AND submittedDate:[...]` is
+    # read as `all:graph OR all:neural OR (all:network AND submittedDate:[...])`,
+    # so hits miss the other words and the date range. Group every word first.
+    if len(terms) > 1:
+        search = 'all:(' + ' AND '.join(terms) + ')'
+    else:
+        search = f'all:{query}'
     if start or end:
         low = (start or '1991-01-01').replace('-', '') + '0000'
         high = (end or datetime.now(timezone.utc).date().isoformat()).replace('-', '') + '2359'
