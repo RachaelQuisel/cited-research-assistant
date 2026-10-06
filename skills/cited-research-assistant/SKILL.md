@@ -1,6 +1,6 @@
 ---
 name: cited-research-assistant
-description: Research a question or check a draft with retrieved evidence and inline citations. Decline unsupported claims. Check the actual final reply and exported brief for missing citations or added claims.
+description: Use when you want every claim cited or declined. Research a question or check a draft against retrieved evidence, then check the final reply for missing citations or added claims.
 disable-model-invocation: true
 allowed-tools: Bash(python3 "${CLAUDE_SKILL_DIR}/scripts/research.py" *)
 hooks:
@@ -13,7 +13,7 @@ hooks:
 
 # Cited Research Assistant
 
-Use Claude Code 2.1.288 or later with Python 3.10 or later, WebSearch, and WebFetch. This mode checks whether citations cover the factual claims. Claude reviews whether each source supports its claim. The check cannot guarantee correct source interpretation. Chat skips the final-response hook. This hook checks the reply before it is returned. Chat is not a supported surface for that check.
+Use Claude Code 2.1.288 or later with Python 3.10 or later, WebSearch, and WebFetch. This mode checks whether citations cover the factual claims. Claude reviews whether each source supports its claim. The check cannot guarantee correct source interpretation. The citation check runs as a Claude Code Stop hook, so it doesn't run in Chat.
 
 Initialize this invocation's coverage record:
 
