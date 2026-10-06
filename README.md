@@ -6,7 +6,7 @@ I built this plugin to show gaps in the evidence. It finds sources and retrieves
 ## Setup and invocation
 
 - Supported host: Claude Code 2.1.288+, Python 3.10+, native WebSearch and WebFetch.
-- Install by name from this repository. From a checkout, run `claude plugin marketplace add .` and then `claude plugin install cited-research-assistant@cited-research-assistant`. From GitHub, run `claude plugin marketplace add RachaelQuisel/cited-research-assistant` and then the same install command.
+- Install by name from this repository. From a checkout, run `claude plugin marketplace add ./` and then `claude plugin install cited-research-assistant@cited-research-assistant`. From GitHub, run `claude plugin marketplace add RachaelQuisel/cited-research-assistant` and then the same install command.
 - Load this checkout without installing with `claude --plugin-dir .`, then invoke `/cited-research-assistant:cited-research-assistant` with a question, date range, or selected draft.
 - Chat and cloud Cowork do not provide this release's verified final-response hook workflow.
 - arXiv's public API requires no key. Its range uses submission date; retain paper versions and separate publication dates.
