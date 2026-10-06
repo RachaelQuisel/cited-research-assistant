@@ -1,12 +1,19 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
 
-SCRIPT = Path(__file__).resolve().parents[1] / 'scripts' / 'research.py'
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / 'skills' / 'cited-research-assistant' / 'scripts' / 'research.py'
+LAUNCHER = ROOT / 'scripts' / 'research.py'
 spec = importlib.util.spec_from_file_location('research', SCRIPT)
 research = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(research)
@@ -165,6 +172,93 @@ class ClaimTests(unittest.TestCase):
             self.assertFalse(result['continue'])
             self.assertIn('failed', result['stopReason'])
             self.assertFalse(json.loads((data/'sessions/session-test.json').read_text())['completed'])
+
+
+class StandaloneSkillTests(unittest.TestCase):
+    def records(self):
+        return ClaimTests().records()
+
+    def hook_command(self):
+        front = (ROOT / 'skills' / 'cited-research-assistant' / 'SKILL.md').read_text().split('---', 2)[1]
+        match = re.search(r"^          command: '(.*)'$", front, re.M)
+        self.assertIsNotNone(match)
+        return match.group(1)
+
+    def run_checked(self, script, env, directory):
+        root = Path(directory)
+        root.mkdir(parents=True, exist_ok=True)
+        records = root / 'records.json'
+        records.write_text(json.dumps(self.records()))
+        output = root / 'brief.md'
+        begin = subprocess.run([sys.executable, str(script), 'begin', '--session-id', 'session-test'],
+                               env=env, capture_output=True, text=True)
+        self.assertEqual(begin.returncode, 0, begin.stderr)
+        prepared = subprocess.run([sys.executable, str(script), 'prepare', '--session-id', 'session-test',
+                                   '--input', str(records), '--output', str(output)],
+                                  env=env, capture_output=True, text=True)
+        self.assertEqual(prepared.returncode, 0, prepared.stderr)
+        payload = json.dumps({'session_id':'session-test', 'last_assistant_message':output.read_text().strip()})
+        return payload, output.read_text()
+
+    def test_launcher_is_not_a_second_copy_of_the_helper(self):
+        text = LAUNCHER.read_text()
+        self.assertNotIn('def search_arxiv', text)
+        self.assertIn("'skills'", text)
+        self.assertIn("'cited-research-assistant'", text)
+        self.assertIn("'research.py'", text)
+        self.assertIn('def search_arxiv', SCRIPT.read_text())
+
+    def test_plugin_root_launcher_matches_the_skill_script(self):
+        with tempfile.TemporaryDirectory() as directory:
+            env = os.environ.copy()
+            env['HOME'] = directory
+            env.pop('CLAUDE_PLUGIN_ROOT', None)
+            env.pop('CLAUDE_SKILL_DIR', None)
+            via_launcher, brief = self.run_checked(LAUNCHER, env, directory)
+            direct = subprocess.run([sys.executable, str(SCRIPT), 'final-check'],
+                                    input=via_launcher, env=env, capture_output=True, text=True)
+            # The launcher already stored the brief; a second begin would reset it.
+            # Compare a fresh direct prepare against the launcher brief instead.
+            other = Path(directory) / 'direct'
+            other.mkdir()
+            env['HOME'] = str(other)
+            _, direct_brief = self.run_checked(SCRIPT, env, other)
+        self.assertEqual(brief, direct_brief)
+        self.assertEqual(direct.returncode, 0, direct.stderr)
+        self.assertEqual(direct.stdout.strip(), '{}')
+
+    def test_stop_hook_prefers_the_plugin_and_also_runs_a_copied_skill(self):
+        command = self.hook_command()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            home = root / 'home'
+            env = os.environ.copy()
+            env['HOME'] = str(home)
+            env['CLAUDE_PLUGIN_ROOT'] = str(ROOT)
+            env.pop('CLAUDE_SKILL_DIR', None)
+            env.pop('CLAUDE_PROJECT_DIR', None)
+            poison = home / '.claude' / 'skills' / 'cited-research-assistant' / 'scripts'
+            poison.mkdir(parents=True)
+            (poison / 'research.py').write_text('import sys\nsys.stderr.write("poison\\n")\nraise SystemExit(9)\n')
+            payload, _ = self.run_checked(LAUNCHER, env, root / 'plugin-run')
+            hook = subprocess.run(['sh', '-c', command], input=payload, env=env, capture_output=True, text=True)
+            self.assertEqual(hook.returncode, 0, hook.stderr)
+            self.assertEqual(hook.stdout.strip(), '{}')
+            self.assertNotIn('poison', hook.stderr)
+
+            standalone_home = root / 'standalone-home'
+            copied = standalone_home / '.claude' / 'skills' / 'cited-research-assistant'
+            shutil.copytree(ROOT / 'skills' / 'cited-research-assistant', copied)
+            self.assertFalse((standalone_home / 'scripts' / 'research.py').exists())
+            env = os.environ.copy()
+            env['HOME'] = str(standalone_home)
+            env.pop('CLAUDE_PLUGIN_ROOT', None)
+            env.pop('CLAUDE_SKILL_DIR', None)
+            env.pop('CLAUDE_PROJECT_DIR', None)
+            payload, _ = self.run_checked(copied / 'scripts' / 'research.py', env, root / 'standalone-run')
+            hook = subprocess.run(['sh', '-c', command], input=payload, env=env, capture_output=True, text=True)
+            self.assertEqual(hook.returncode, 0, hook.stderr)
+            self.assertEqual(hook.stdout.strip(), '{}')
 
 
 if __name__ == '__main__':
