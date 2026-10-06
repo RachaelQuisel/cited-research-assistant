@@ -6,7 +6,8 @@ I built this plugin to show gaps in the evidence. It finds sources and retrieves
 ## Setup and invocation
 
 - Supported host: Claude Code 2.1.288+, Python 3.10+, native WebSearch and WebFetch.
-- Load locally with `claude --plugin-dir ./plugins/cited-research-assistant`, then invoke `/cited-research-assistant:cited-research-assistant` with a question, date range, or selected draft.
+- Install by name from this repository. From a checkout, run `claude plugin marketplace add .` and then `claude plugin install cited-research-assistant@cited-research-assistant`. From GitHub, run `claude plugin marketplace add RachaelQuisel/cited-research-assistant` and then the same install command.
+- Load this checkout without installing with `claude --plugin-dir .`, then invoke `/cited-research-assistant:cited-research-assistant` with a question, date range, or selected draft.
 - Chat and cloud Cowork do not provide this release's verified final-response hook workflow.
 - arXiv's public API requires no key. Its range uses submission date; retain paper versions and separate publication dates.
 - Semantic Scholar's domain-restricted web search finds candidates. The optional API uses unauthenticated requests; it reads no stored API credential. Calls can return 429 and site fetches can return 403. Those are reported as unavailable evidence.
@@ -28,6 +29,6 @@ Source records, passages, and actual final-message audits persist under `~/.loca
 
 ## Development and license
 
-Run `claude plugin validate ./plugins/cited-research-assistant` and `python3 -m unittest discover -s plugins/cited-research-assistant/tests`.
+Run `claude plugin validate .claude-plugin/plugin.json`, `claude plugin validate .claude-plugin/marketplace.json`, and `python3 -m unittest discover -s tests`.
 
 The original code and instructions are MIT licensed. Source passages and user material keep their own rights; use short supporting excerpts with attribution.
