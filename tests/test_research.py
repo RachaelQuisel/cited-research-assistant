@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import urllib.parse
 from unittest.mock import patch
 
 
@@ -20,6 +21,11 @@ spec.loader.exec_module(research)
 
 
 class RetrievalTests(unittest.TestCase):
+    def setUp(self):
+        self.assertEqual(
+            Path(research.__file__).resolve(),
+            ROOT / 'skills' / 'cited-research-assistant' / 'scripts' / 'research.py')
+
     def test_arxiv_preserves_version_dates_and_access_scope(self):
         feed = '''<feed xmlns="http://www.w3.org/2005/Atom"><entry>
         <id>http://arxiv.org/abs/1706.03762v7</id><title>Attention Is All You Need</title>
@@ -36,6 +42,31 @@ class RetrievalTests(unittest.TestCase):
         self.assertEqual(source['scope'], 'abstract')
         self.assertEqual(source['publication_status'], 'preprint')
         self.assertEqual(source['content'], 'The model uses attention.')
+
+    def arxiv_query(self, query, start=None, end=None):
+        seen = {}
+        def capture(url, headers=None):
+            seen['url'] = url
+            return '<feed xmlns="http://www.w3.org/2005/Atom"></feed>'
+        with patch.object(research, 'request', side_effect=capture):
+            result = research.search_arxiv(query, start, end)
+        self.assertEqual(result['sources'], [])
+        self.assertIsNone(result['unavailable'])
+        parsed = urllib.parse.parse_qs(urllib.parse.urlsplit(seen['url']).query)
+        return parsed['search_query'][0]
+
+    def test_multiword_date_query_groups_every_word_before_the_date_filter(self):
+        self.assertEqual(
+            self.arxiv_query('graph neural network', '2024-01-01', '2025-12-31'),
+            'all:(graph AND neural AND network) AND submittedDate:[202401010000 TO 202512312359]')
+
+    def test_multiword_query_without_a_date_is_still_a_conjunction(self):
+        self.assertEqual(self.arxiv_query('graph neural network'), 'all:(graph AND neural AND network)')
+
+    def test_single_word_date_query_stays_one_field_term(self):
+        self.assertEqual(
+            self.arxiv_query('attention', '2017-01-01', '2017-12-31'),
+            'all:attention AND submittedDate:[201701010000 TO 201712312359]')
 
     def test_semantic_scholar_absent_abstract_is_metadata_only(self):
         response = {'data':[{'paperId':'abc', 'title':'A paper', 'url':'https://www.semanticscholar.org/paper/abc',
