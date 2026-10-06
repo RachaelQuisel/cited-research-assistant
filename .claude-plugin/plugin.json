@@ -12,5 +12,6 @@
     "papers",
     "verification"
   ],
-  "displayName": "Cited Research Assistant"
+  "displayName": "Cited Research Assistant",
+  "icon": "./icon.png"
 }
