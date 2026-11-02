@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "repository": "RachaelQuisel/cited-research-assistant",
+  "packages": [
+    {
+      "name": "cited-research-assistant",
+      "root": ".",
+      "version": "1.0.3",
+      "manifests": [
+        "plugin.json",
+        ".claude-plugin/plugin.json",
+        ".codex-plugin/plugin.json"
+      ],
+      "skills": [
+        "skills/cited-research-assistant/SKILL.md"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "path": "skills/cited-research-assistant/SKILL.md",
+      "version": "1.0.3",
+      "sha256": "517997aea4147c2264bc4db0077b7c1b4d6ce1ffc05d662ff8eddc7f8e2dc0aa",
+      "source": "skills/cited-research-assistant/SKILL.md",
+      "guide": "skills/cited-research-assistant/README.md"
+    }
+  ],
+  "copies": []
+}
