@@ -5,7 +5,7 @@
     {
       "name": "cited-research-assistant",
       "root": ".",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "manifests": [
         "plugin.json",
         ".claude-plugin/plugin.json",
@@ -19,8 +19,8 @@
   "skills": [
     {
       "path": "skills/cited-research-assistant/SKILL.md",
-      "version": "1.0.3",
-      "sha256": "517997aea4147c2264bc4db0077b7c1b4d6ce1ffc05d662ff8eddc7f8e2dc0aa",
+      "version": "1.0.4",
+      "sha256": "6a6371881c523b2f1a394191d1f02a18200a7297386ae1c0dbdda749e4c9843d",
       "source": "skills/cited-research-assistant/SKILL.md",
       "guide": "skills/cited-research-assistant/README.md"
     }

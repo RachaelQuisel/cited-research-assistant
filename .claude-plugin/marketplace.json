@@ -9,7 +9,7 @@
       "name": "cited-research-assistant",
       "source": "./",
       "description": "Research questions and check drafts with retrieved evidence. Cite each supported claim. Identify evidence gaps. Check the final reply against the cited brief.",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "author": {
         "name": "Rachael Quisel"
       }

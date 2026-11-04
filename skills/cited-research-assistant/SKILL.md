@@ -1,6 +1,6 @@
 ---
 name: cited-research-assistant
-version: 1.0.3
+version: 1.0.4
 description: Use when you want every claim cited or declined. Research a question or check a draft against retrieved evidence, then check the final reply for missing citations or added claims.
 disable-model-invocation: true
 allowed-tools: Bash(python3 "${CLAUDE_SKILL_DIR}/scripts/research.py" *)
